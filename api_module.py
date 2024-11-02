@@ -71,22 +71,23 @@ def loadDomainsandUpdate():
             if ActualIP != data['ip']:
                 newIP = True
                 for domain in data['domains']:
-                    status_code = updateDomain(
-                        IP=ActualIP,
-                        DNS_RECORD_ID=domain['DNS_RECORD_ID'],
-                        ZONE_ID=domain['ZONE_ID'],
-                        COMMENT=domain['COMMENT'],
-                        DOMAIN=domain['DOMAIN'],
-                        PROXY_TYPE=domain['PROXY_TYPE'] == 'True',
-                        TTL_TIME=domain['TTL_TIME'],
-                        TYPE=domain['TYPE'],
-                        EMAIL_TOKEN=domain['EMAIL_TOKEN'],
-                        GLOBAL_KEY=data["globalkey"]
-                    )
-                    if status_code == 200:
-                        print(f'Update successfully: {domain}')
-                    else:
-                        print(f'Update error {status_code}: {domain}')
+                    if domain["ENABLE"]:
+                        status_code = updateDomain(
+                            IP=ActualIP,
+                            DNS_RECORD_ID=domain['DNS_RECORD_ID'],
+                            ZONE_ID=domain['ZONE_ID'],
+                            COMMENT=domain['COMMENT'],
+                            DOMAIN=domain['DOMAIN'],
+                            PROXY_TYPE=domain['PROXY_TYPE'] == 'True',
+                            TTL_TIME=domain['TTL_TIME'],
+                            TYPE=domain['TYPE'],
+                            EMAIL_TOKEN=domain['EMAIL_TOKEN'],
+                            GLOBAL_KEY=data["globalkey"]
+                        )
+                        if status_code == 200:
+                            print(f'Update successfully: {domain}')
+                        else:
+                            print(f'Update error {status_code}: {domain}')
         if newIP:
             saveData("ip", ActualIP, "update")           
         else:

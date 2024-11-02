@@ -6,8 +6,12 @@ ctk.set_appearance_mode("system")
 
 class Domains(ctk.CTkScrollableFrame):
     def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, label_text="Domains", **kwargs)
+        self.switch_vars = []
         self.load_domains()
+
+    def switch_enable_event(self, index):
+        is_enabled = self.switch_vars[index].get()
 
     def load_domains(self):
         try:
@@ -16,11 +20,20 @@ class Domains(ctk.CTkScrollableFrame):
                 domains = data.get("domains", [])
 
                 for index, domain in enumerate(domains):
-                    domain_label = ctk.CTkLabel(self, text=f"Domain {index + 1}: {domain['DOMAIN']}")
-                    domain_label.grid(row=index, column=0, padx=10, pady=5, sticky="w")
+                    label_domain = ctk.CTkLabel(self, text=f"Domain {index + 1}: {domain['DOMAIN']}")
+                    label_domain.grid(row=index, column=0, padx=10, pady=5, sticky="w")
                     
-                    ttl_label = ctk.CTkLabel(self, text=f"TTL: {domain['TTL_TIME']}, Proxy: {domain['PROXY_TYPE']}")
-                    ttl_label.grid(row=index, column=1, padx=10, pady=5, sticky="w")
+                    label_ttl = ctk.CTkLabel(self, text=f"TTL: {domain['TTL_TIME']}")
+                    label_ttl.grid(row=index, column=1, padx=10, pady=5, sticky="w")
+                    label_proxy = ctk.CTkLabel(self, text=f"Proxy: {domain['PROXY_TYPE']}")
+                    label_proxy.grid(row=index, column=2, padx=10, pady=5, sticky="w")
+                    label_type = ctk.CTkLabel(self, text=f"Type: {domain['TYPE']}")
+                    label_type.grid(row=index, column=3, padx=10, pady=5, sticky="w")
+
+                    switch_enable_var = ctk.BooleanVar(value=domain['ENABLE'])
+                    self.switch_vars.append(switch_enable_var)
+                    switch_enable = ctk.CTkSwitch(self, text="Enable", command=lambda idx=index: self.switch_enable_event(idx), variable=switch_enable_var, onvalue=True, offvalue=False)
+                    switch_enable.grid(row=index, column=4, padx=10, pady=5, sticky="w")
 
         except FileNotFoundError:
             print(f"erro")
@@ -81,34 +94,36 @@ class AddDomain(ctk.CTk):
 class Application(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("500x300")
+        self.geometry("600x500")
         self.title("Cloudflare DDNS Settings")
         self.iconbitmap("icon.ico")
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
         self.data = {"ip": "", "interval": "", "globalkey": "", "notifications": "", "domains": []}
 
         self.label_globalkey= ctk.CTkLabel(self, text="Global API Key: ")
         self.label_globalkey.grid(row=0, column=0, padx=10, pady=10, sticky="e")
-        self.entry_globalkey = ctk.CTkEntry(self, width=300, height=40, corner_radius=10, placeholder_text="Enter your Global API Key")
+        self.entry_globalkey = ctk.CTkEntry(self, width=300, height=40, corner_radius=5, placeholder_text="Enter your Global API Key")
         self.entry_globalkey.grid(row=0, column=1, padx=10, pady=10, sticky="w")
         
         self.label_notifications = ctk.CTkLabel(self, text="Enable notifications:")
         self.label_notifications.grid(row=1, column=0, padx=10, pady=20, sticky="e")
-        self.notifications_var = ctk.StringVar(value="True")
+        self.notifications_var = ctk.BooleanVar(value=False)
         self.checkbox_notifications = ctk.CTkCheckBox(self, text="", command=self.checkbox_notifications_event, variable=self.notifications_var, onvalue=True, offvalue=False)
         self.checkbox_notifications.grid(row=1, column=1, padx=0, pady=20, sticky="w")
         
-        self.domainsFrame = Domains(master=self, width=300, height=200, corner_radius=0, fg_color="transparent")
-        self.domainsFrame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        self.domainsFrame = Domains(master=self, width=300, height=200)
+        self.domainsFrame.grid(row=2, column=0, columnspan=2, padx=10, pady=(10, 0), sticky="nsew")
 
         self.adddomain_dialog = ctk.CTkButton(self, text="Add new domain", command=self.open_addnewdomain_callback)
-        self.adddomain_dialog.grid(row=3, column=0, padx=10, pady=20, sticky="e")
+        self.adddomain_dialog.grid(row=3, column=0, columnspan=2, padx=(10, 0), pady=5)
 
         self.confirm_button = ctk.CTkButton(self, text="Confirm", command=self.confirm_callback)
-        self.confirm_button.grid(row=4, column=0, padx=10, pady=30, sticky="e")
+        self.confirm_button.grid(row=4, column=0, padx=(10, 0), pady=30, sticky="e")
         
         self.exit_button = ctk.CTkButton(self, text="Exit", command=self.exit_callback)
-        self.exit_button.grid(row=4, column=1, padx=10, pady=30, sticky="w")
+        self.exit_button.grid(row=4, column=1, padx=(20, 0), pady=30, sticky="w")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -122,10 +137,9 @@ class Application(ctk.CTk):
             self.data["globalkey"] = global_data
 
         notifications_data = api_module.loadData("notifications")
-        if notifications_data:
-            self.notifications_var.set(notifications_data)
-            self.checkbox_notifications.setvar(notifications_data)
-            self.data["notifications"] = notifications_data
+        print(f'notifications_data: {notifications_data}')
+        self.notifications_var.set(value=notifications_data)
+        self.data["notifications"] = notifications_data
     
     def open_addnewdomain_callback(self):
         adddomain = AddDomain()
