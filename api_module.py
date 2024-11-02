@@ -32,7 +32,6 @@ def getExternalIP():
     else:
         print("Erro")
 
-
 def saveData(key, value, type, file_path='settings.json'):
     try:
         with open(file_path, 'r') as f:
