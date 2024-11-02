@@ -22,7 +22,6 @@ def updateDomain(IP, DNS_RECORD_ID, ZONE_ID, COMMENT, DOMAIN, PROXY_TYPE, TTL_TI
     }
 
     response = requests.request("PATCH", url_cloudflare, json=payload, headers=headers)
-    
     return response.status_code 
 
 def getExternalIP():
@@ -83,10 +82,7 @@ def loadDomainsandUpdate():
                             EMAIL_TOKEN=domain['EMAIL_TOKEN'],
                             GLOBAL_KEY=data["globalkey"]
                         )
-                        if status_code == 200:
-                            print(f'Update successfully: {domain}')
-                        else:
-                            print(f'Update error {status_code}: {domain}')
+                        return status_code
         if newIP:
             saveData("ip", ActualIP, "update")           
         else:

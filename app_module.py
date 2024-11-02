@@ -101,7 +101,7 @@ class AddDomain(ctk.CTk):
 
         self.create_label_entry("entry_ttl_time", "TTL Time (set 1 for Auto):", 5)
         self.create_label_entry("entry_type", "Type (A, AAAA, CNAME, etc.):", 6)
-        self.create_label_entry("entry_email", "Email Token:", 7)
+        self.create_label_entry("entry_email", "Email Token (your email account ):", 7)
 
         submit_button = ctk.CTkButton(self, text="Submit Domain", command=self.submit_callback)
         submit_button.grid(row=8, column=0, columnspan=2, pady=20)
@@ -140,7 +140,7 @@ class AddDomain(ctk.CTk):
 class Application(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("650x500")
+        self.geometry("650x525")
         self.title("Cloudflare DDNS Settings")
         self.iconbitmap("icon.ico")
         self.grid_columnconfigure(0, weight=1)
