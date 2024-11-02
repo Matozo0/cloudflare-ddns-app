@@ -6,17 +6,25 @@ app = None
 logo = Image.open('icon.png').convert('RGBA')
 
 def update_now(icon, item):
-    print("update")
+    api_module.loadDomainsandUpdate()
 
 def open_settings(icon, item):
     global app
-    if app is None or not app.winfo_exists():
+    print(app)
+    if app is None:
         app = app_module.Application()
+        app.protocol("WM_DELETE_WINDOW", on_close)
         app.mainloop()
+
+def on_close():
+    global app
+    if app is not None:        
+        app.destroy()        
+        app = None
 
 def exit_app(icon, item):
     global app
-    if app is not None and app.winfo_exists():
+    if app is not None:
         app.destroy()
     icon.stop()
 

@@ -30,6 +30,7 @@ class AddDomain(ctk.CTk):
         super().__init__()
         self.title("Add New Domain")       
         self.geometry("400x400")
+        self.iconbitmap("icon.ico")
 
         for i in range(8):  
             self.grid_rowconfigure(i, weight=1, pad=5)
@@ -82,6 +83,7 @@ class Application(ctk.CTk):
         super().__init__()
         self.geometry("500x300")
         self.title("Cloudflare DDNS Settings")
+        self.iconbitmap("icon.ico")
 
         self.data = {"ip": "", "interval": "", "globalkey": "", "notifications": "", "domains": []}
 
@@ -97,7 +99,7 @@ class Application(ctk.CTk):
         self.checkbox_notifications.grid(row=1, column=1, padx=0, pady=20, sticky="w")
         
         self.domainsFrame = Domains(master=self, width=300, height=200, corner_radius=0, fg_color="transparent")
-        self.domainsFrame.grid(row=2, column=0, sticky="nsew")
+        self.domainsFrame.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
         self.adddomain_dialog = ctk.CTkButton(self, text="Add new domain", command=self.open_addnewdomain_callback)
         self.adddomain_dialog.grid(row=3, column=0, padx=10, pady=20, sticky="e")
@@ -128,10 +130,15 @@ class Application(ctk.CTk):
     def open_addnewdomain_callback(self):
         adddomain = AddDomain()
         adddomain.mainloop()
+
     def checkbox_notifications_event(self):
         self.data["notifications"] = self.notifications_var.get()
+
     def confirm_callback(self):
+        self.data["globalkey"] = self.entry_globalkey.get()
+
         api_module.saveData("globalkey", self.data["globalkey"], "update")
         api_module.saveData("notifications", self.data["notifications"], "update")
+
     def exit_callback(self):
         self.destroy()
