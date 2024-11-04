@@ -6,14 +6,13 @@ from threading import Thread, Event
 from datetime import datetime, timedelta
 
 app = None
-logo = Image.open(resource_path("icon.ico")).convert("RGBA")
+logo = Image.open(resource_path("icons/icon.ico")).convert("RGBA")
 stop_event = Event()
 last_update = None
 next_update = None
 
 def update_now_item(icon, item):
     global last_update
-
     update()
 
 def update():
@@ -52,7 +51,6 @@ def open_settings(icon, item):
     global app
     if app is None:
         app = Application(on_exit_callback=on_close)
-        app.protocol("WM_DELETE_WINDOW", on_close)
         app.mainloop()
     else:
         app.lift() 

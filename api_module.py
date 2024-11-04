@@ -55,9 +55,9 @@ def saveData(key, value, type, file_path='config.json'):
     try:
         with open(resource_path(file_path), 'w') as f:
             dump(data, f, indent=4)
-        print("Dados salvos com sucesso.")
+        return 1
     except Exception as e:
-        print(f"Erro ao salvar os dados: {e}")
+        return 0
 
 def loadData(key, file_path='config.json'):
     try:

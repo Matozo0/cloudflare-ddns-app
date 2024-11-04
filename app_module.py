@@ -6,6 +6,43 @@ from PIL import Image
 ctk.set_default_color_theme(resource_path("color_theme.json"))
 ctk.set_appearance_mode("system")
 
+class MessageBox(ctk.CTkToplevel):
+    def __init__(self, on_exit_callback, title="Info", message="", button_text="Ok", type="info"):
+        super().__init__()
+        self.on_exit_callback = on_exit_callback
+        self.title(title)    
+        self.iconbitmap(resource_path("icons/icon.ico"))
+        self.grid_columnconfigure(0, weight=1) 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)  
+        self.protocol("WM_DELETE_WINDOW", self.exit_messagebox_callback)
+
+        window_width = 300
+        window_height = 100
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        position_x = (screen_width // 2) - (window_width // 2)
+        position_y = (screen_height // 2) - (window_height // 2)
+        self.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
+        self.resizable(False, False)        
+
+        frame_content = ctk.CTkFrame(self, fg_color="transparent")
+        frame_content.grid(row=0, column=0, pady=(10, 5))
+
+        self.image = ctk.CTkLabel(frame_content, text="", image=ctk.CTkImage(size=[30, 30], light_image=Image.open(resource_path(f"icons/messagebox-{type}.ico"))))
+        self.image.grid(row=0, column=0, padx=10, pady=10)
+        self.label = ctk.CTkLabel(frame_content, text=message)
+        self.label.grid(row=0, column=1, padx=(10, 0), pady=10, sticky="e")
+
+        self.button = ctk.CTkButton(self, text=button_text, command=self.exit_messagebox_callback)
+        self.button.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+        self.grab_set()
+        self.attributes('-topmost', True)
+
+    def exit_messagebox_callback(self):
+        self.destroy()
+        self.on_exit_callback()
+
 class IntervalWidget(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs, bg_color="transparent")
@@ -70,7 +107,7 @@ class Domains(ctk.CTkScrollableFrame):
                     switch_enable = ctk.CTkSwitch(self, text="Enable", command=self.switch_enable_event(index), variable=switch_enable_var, onvalue=True, offvalue=False)
                     switch_enable.grid(row=index, column=4, padx=10, pady=5, sticky="w")
 
-                    button_delete = ctk.CTkButton(self, text="", command=lambda data=data, domain=domain: self.delete_domain_event(data, domain), image=ctk.CTkImage(Image.open("delete.png")), width=32, height=32)
+                    button_delete = ctk.CTkButton(self, text="", command=lambda data=data, domain=domain: self.delete_domain_event(data, domain), image=ctk.CTkImage(Image.open(resource_path("icons/delete.png"))), width=32, height=32)
                     button_delete.grid(row=index, column=5, padx=0, pady=5, sticky="w")
 
         except FileNotFoundError:
@@ -81,8 +118,14 @@ class AddDomain(ctk.CTk):
         super().__init__()
         self.domains_frame = domains_frame
         self.title("Add New Domain")       
-        self.geometry("400x400")
-        self.iconbitmap(resource_path("icon.ico"))
+        window_width = 400
+        window_height = 400
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        position_x = (screen_width // 2) - (window_width // 2)
+        position_y = (screen_height // 2) - (window_height // 2)
+        self.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
+        self.iconbitmap(resource_path("icons/icon.ico"))
 
         for i in range(8):  
             self.grid_rowconfigure(i, weight=1, pad=5)
@@ -141,6 +184,12 @@ class Application(ctk.CTk):
     def __init__(self, on_exit_callback):
         super().__init__()
         self.on_exit_callback = on_exit_callback
+        self.title("Cloudflare DDNS Settings")
+        self.iconbitmap(default=resource_path("icons/icon.ico"))
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.protocol("WM_DELETE_WINDOW", self.exit_callback)
+
         window_width = 650
         window_height = 525
         screen_width = self.winfo_screenwidth()
@@ -148,10 +197,6 @@ class Application(ctk.CTk):
         position_x = (screen_width // 2) - (window_width // 2)
         position_y = (screen_height // 2) - (window_height // 2)
         self.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
-        self.title("Cloudflare DDNS Settings")
-        self.iconbitmap(resource_path("icon.ico"))
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
 
         self.data = {"ip": "", "interval": "", "globalkey": "", "notifications": "", "domains": []}
 
@@ -193,6 +238,18 @@ class Application(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
 
         self.loadAllData()
+        self.messagebox_window = None
+
+    def on_close(self):
+        self.messagebox_window.destroy()
+        self.messagebox_window = None 
+
+    def open_messagebox(self, title="", message="", button_text="", type=""):
+        if self.messagebox_window is None:
+            self.messagebox_window = MessageBox(on_exit_callback=self.on_close, title=title, message=message, button_text=button_text, type=type)
+            # self.messagebox_window.protocol("WM_DELETE_WINDOW", self.on_close)
+        else:
+            self.messagebox_window.focus()
 
     def loadAllData(self):
         global_data = loadData("globalkey")
@@ -213,10 +270,17 @@ class Application(ctk.CTk):
         self.data["notifications"] = self.notifications_var.get()
         self.data["interval"] = int(self.frame_interval.entry.get())
 
-        saveData("globalkey", self.data["globalkey"], "update")
-        saveData("interval", self.data["interval"], "update")
-        saveData("notifications", self.data["notifications"], "update")
+        status_globalkey = saveData("globalkey", self.data["globalkey"], "update")
+        status_interval = saveData("interval", self.data["interval"], "update")
+        status_notifications = saveData("notifications", self.data["notifications"], "update")
+
+        if status_globalkey and status_interval and status_notifications:
+            self.open_messagebox("Save", "Save sucessefully.", "Ok", "info")
+        else:
+            self.open_messagebox("Save", "Something went wrong when saving. Try again.", "Ok", "warning")
 
     def exit_callback(self):
+        if callable(self.on_exit_callback):
+            self.on_exit_callback()
         self.destroy()
-        self.on_exit_callback()
+        self.quit()
