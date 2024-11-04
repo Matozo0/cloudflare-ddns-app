@@ -1,10 +1,10 @@
 import customtkinter as ctk
-import api_module, json
-from tkinter import messagebox
+from api_module import loadData, loadDomainsandUpdate, saveData, resource_path
+from json import dump, load
 from PIL import Image
 
-ctk.set_default_color_theme("color_theme.json")
-ctk.set_appearance_mode("light")
+ctk.set_default_color_theme(resource_path("color_theme.json"))
+ctk.set_appearance_mode("system")
 
 class IntervalWidget(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -42,8 +42,8 @@ class Domains(ctk.CTkScrollableFrame):
 
     def delete_domain_event(self, data, target_domain):
         data["domains"] = [domain for domain in data["domains"] if domain.get("DNS_RECORD_ID") != target_domain["DNS_RECORD_ID"]]
-        with open("settings.json", "w") as f:
-            json.dump(data, f, indent=4)
+        with open(resource_path("config.json"), "w") as f:
+            dump(data, f, indent=4)
         self.load_domains()
 
     def load_domains(self):
@@ -51,8 +51,8 @@ class Domains(ctk.CTkScrollableFrame):
             widgets.destroy()
 
         try:
-            with open("settings.json", "r") as f:
-                data = json.load(f)
+            with open(resource_path("config.json"), "r") as f:
+                data = load(f)
                 domains = data.get("domains", [])
 
                 for index, domain in enumerate(domains):
@@ -82,7 +82,7 @@ class AddDomain(ctk.CTk):
         self.domains_frame = domains_frame
         self.title("Add New Domain")       
         self.geometry("400x400")
-        self.iconbitmap("icon.ico")
+        self.iconbitmap(resource_path("icon.ico"))
 
         for i in range(8):  
             self.grid_rowconfigure(i, weight=1, pad=5)
@@ -129,20 +129,27 @@ class AddDomain(ctk.CTk):
                 "EMAIL_TOKEN": self.entry_email.get()
             }
 
-            api_module.saveData("domains", new_domain, "append")
+            saveData("domains", new_domain, "append")
             self.domains_frame.load_domains()
             self.destroy() 
         except ValueError:
-            messagebox.showerror("Invalid Input", "Please enter a valid TTL time.")
+            print("Invalid Input", "Please enter a valid TTL time.")
         except Exception as e:
-            messagebox.showerror("Submission Error", f"An error occurred: {e}")
+            print("Submission Error", f"An error occurred: {e}")
 
 class Application(ctk.CTk):
-    def __init__(self):
+    def __init__(self, on_exit_callback):
         super().__init__()
-        self.geometry("650x525")
+        self.on_exit_callback = on_exit_callback
+        window_width = 650
+        window_height = 525
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        position_x = (screen_width // 2) - (window_width // 2)
+        position_y = (screen_height // 2) - (window_height // 2)
+        self.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
         self.title("Cloudflare DDNS Settings")
-        self.iconbitmap("icon.ico")
+        self.iconbitmap(resource_path("icon.ico"))
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
@@ -188,12 +195,12 @@ class Application(ctk.CTk):
         self.loadAllData()
 
     def loadAllData(self):
-        global_data = api_module.loadData("globalkey")
+        global_data = loadData("globalkey")
         if global_data:
             self.entry_globalkey.insert(0, global_data)
             self.data["globalkey"] = global_data
 
-        notifications_data = api_module.loadData("notifications")
+        notifications_data = loadData("notifications")
         self.notifications_var.set(value=notifications_data)
         self.data["notifications"] = notifications_data
     
@@ -206,9 +213,10 @@ class Application(ctk.CTk):
         self.data["notifications"] = self.notifications_var.get()
         self.data["interval"] = int(self.frame_interval.entry.get())
 
-        api_module.saveData("globalkey", self.data["globalkey"], "update")
-        api_module.saveData("interval", self.data["interval"], "update")
-        api_module.saveData("notifications", self.data["notifications"], "update")
+        saveData("globalkey", self.data["globalkey"], "update")
+        saveData("interval", self.data["interval"], "update")
+        saveData("notifications", self.data["notifications"], "update")
 
     def exit_callback(self):
         self.destroy()
+        self.on_exit_callback()

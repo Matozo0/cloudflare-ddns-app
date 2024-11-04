@@ -1,4 +1,12 @@
-import requests, json, api_module
+from requests import get, request
+from json import dump, load
+import sys
+from pathlib import Path
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS) / relative_path
+    return Path(__file__).parent / relative_path
 
 ActualIP = ""
 
@@ -21,20 +29,20 @@ def updateDomain(IP, DNS_RECORD_ID, ZONE_ID, COMMENT, DOMAIN, PROXY_TYPE, TTL_TI
         "X-Auth-Key": GLOBAL_KEY
     }
 
-    response = requests.request("PATCH", url_cloudflare, json=payload, headers=headers)
+    response = request("PATCH", url_cloudflare, json=payload, headers=headers)
     return response.status_code 
 
 def getExternalIP():
-    response = requests.get("https://api.ipify.org")
+    response = get("https://api.ipify.org")
     if response.status_code == 200:
         return response.text
     else:
         print("Erro")
 
-def saveData(key, value, type, file_path='settings.json'):
+def saveData(key, value, type, file_path='config.json'):
     try:
-        with open(file_path, 'r') as f:
-            data = json.load(f)
+        with open(resource_path(file_path), 'r') as f:
+            data = load(f)
     except FileNotFoundError:
         data = {"ip": "", "interval": "", "globalkey": "", "notifications": "", "domains": []}
 
@@ -45,16 +53,16 @@ def saveData(key, value, type, file_path='settings.json'):
     data.update(data)
 
     try:
-        with open(file_path, 'w') as f:
-            json.dump(data, f, indent=4)
+        with open(resource_path(file_path), 'w') as f:
+            dump(data, f, indent=4)
         print("Dados salvos com sucesso.")
     except Exception as e:
         print(f"Erro ao salvar os dados: {e}")
 
-def loadData(key, file_path='settings.json'):
+def loadData(key, file_path='config.json'):
     try:
-        with open(file_path, 'r') as f:
-            data = json.load(f)
+        with open(resource_path(file_path), 'r') as f:
+            data = load(f)
             return data[key]
     except Exception as e:
         print(f"Erro ou carregar parametro: {e}")
@@ -63,8 +71,8 @@ def loadDomainsandUpdate():
     try:
         ActualIP = getExternalIP()
         newIP = False
-        with open('settings.json') as f:
-            data = json.load(f)
+        with open('config.json') as f:
+            data = load(f)
 
             if ActualIP != data['ip']:
                 newIP = True
