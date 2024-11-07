@@ -74,7 +74,7 @@ Para facilitar, você pode baixar o executável pré-compilado na página de [Re
 
 ## Licença
 
-Este projeto é licenciado sob a Licença MIT.
+Este projeto é licenciado sob a [Licença Apache 2.0](https://github.com/Matozo0/cloudflare-ddns-app/blob/main/LICENSE).
 
 ---
 

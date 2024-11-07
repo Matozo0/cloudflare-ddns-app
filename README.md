@@ -76,7 +76,7 @@ For ease of use, you can download the pre-compiled executable from the [Releases
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [Apache License 2.0](https://github.com/Matozo0/cloudflare-ddns-app/blob/main/LICENSE) .
 
 ---
 
