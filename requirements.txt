@@ -13,4 +13,5 @@ pystray==0.19.5
 pywin32-ctypes @ file:///C:/b/abs_2cfx5l4nvi/croot/pywin32-ctypes_1709340246092/work
 requests==2.32.3
 six==1.16.0
+timeloop==1.0.2
 urllib3==2.2.3
