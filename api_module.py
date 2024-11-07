@@ -67,11 +67,14 @@ def loadData(key, file_path='config.json'):
     except Exception as e:
         print(f"Erro ou carregar parametro: {e}")
 
-def loadDomainsandUpdate():
+def loadDomainsandUpdate(icon):
     try:
         ActualIP = getExternalIP()
         newIP = False
-        with open('config.json') as f:
+        notifications_enable = loadData("notifications")
+        updated = []
+        not_updated = []
+        with open(resource_path('config.json')) as f:
             data = load(f)
 
             if ActualIP != data['ip']:
@@ -90,11 +93,18 @@ def loadDomainsandUpdate():
                             EMAIL_TOKEN=domain['EMAIL_TOKEN'],
                             GLOBAL_KEY=data["globalkey"]
                         )
-                        return status_code
+                        if status_code == 200:
+                            updated.append(domain['DOMAIN'])
+                        elif status_code != 200:
+                            not_updated.append(domain['DOMAIN'])
+        if updated != [] and notifications_enable:
+            icon.notify(f"{updated}: domains updated successfully!", "DNS Updater")
+        if not_updated != [] and notifications_enable:
+            icon.notify(f"{not_updated}: domains not updated!", "DNS Updater")
         if newIP:
             saveData("ip", ActualIP, "update")           
         else:
             print("Sem alteracoes no ip")
                           
     except Exception as e:
-        print(f"Erro ao adicionar novo domínio: {e}")
+        print(f"Erro ao atualizar domínio: {e}")

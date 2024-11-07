@@ -2,46 +2,30 @@ from app_module import Application
 from api_module import loadData, loadDomainsandUpdate, resource_path
 from pystray import Icon, Menu, MenuItem
 from PIL import Image
-from threading import Thread, Event
 from datetime import datetime, timedelta
+from timeloop import Timeloop
 
+app_icon = Image.open(resource_path("icons/icon.ico")).convert("RGBA")
 app = None
-logo = Image.open(resource_path("icons/icon.ico")).convert("RGBA")
-stop_event = Event()
 last_update = None
 next_update = None
+tl = Timeloop()
+
+@tl.job(interval=timedelta(seconds=int(loadData("interval"))*60))
+def update():
+    global last_update, next_update
+
+    loadDomainsandUpdate(icon)
+    last_update = datetime.now()
+    print(f"Last Update: {last_update}")
+    next_update = last_update + timedelta(seconds=int(loadData("interval"))*60)
+    print(f"Next Update: {next_update}")
 
 def update_now_item(icon, item):
     global last_update
-    update()
-
-def update():
-    global last_update, icon
-
-    status_code = loadDomainsandUpdate()
-    if status_code == 200 and loadData("notifications"):
-        icon.notify("Domains updated successfully!", "DNS Updater")
-    elif status_code != 200 and loadData("notifications"):
-        icon.notify("Domains not updated!", "DNS Updater") 
+    loadDomainsandUpdate(icon)
     last_update = datetime.now()
-
-def periodic_update():
-    global last_update, next_update
-    update_interval = int(loadData("interval"))*60
-
-    while not stop_event.is_set():
-        update()
-        
-        last_update = datetime.now()
-        print(f"Last Update: {last_update}")
-        next_update = last_update + timedelta(seconds=update_interval)
-        print(f"Next Update: {next_update}")
-        stop_event.wait(update_interval)
-        update_interval = int(loadData("interval"))*60
-
-def start_periodic_update():
-    update_thread = Thread(target=periodic_update, daemon=True)
-    update_thread.start()
+    print(f"Manual Update: {last_update}")
 
 def on_close():
     global app
@@ -56,16 +40,16 @@ def open_settings(icon, item):
         app.lift() 
 
 def exit_app(icon, item):
-    global app
+    global app, tl
     if app is not None:
         app.destroy()
     app = None
-    stop_event.set()
+    tl.stop()
     icon.stop() 
 
 icon = Icon(
     "DNS Updater",
-    icon=logo,
+    icon=app_icon,
     title="DNS Updater",
     menu=Menu(
         MenuItem("Settings", open_settings, default=True),
@@ -74,5 +58,6 @@ icon = Icon(
     )
 )
 
-icon.run_detached = start_periodic_update
-icon.run()
+if __name__ in '__main__':
+    tl.start()
+    icon.run()
