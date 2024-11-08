@@ -13,10 +13,11 @@ tl = Timeloop()
 
 @tl.job(interval=timedelta(seconds=int(loadData("interval"))*60))
 def update():
-    global last_update, next_update
+    global last_update, next_update, icon
 
     loadDomainsandUpdate(icon)
     last_update = datetime.now()
+    icon.update_menu()
     print(f"Last Update: {last_update}")
     next_update = last_update + timedelta(seconds=int(loadData("interval"))*60)
     print(f"Next Update: {next_update}")
@@ -25,6 +26,7 @@ def update_now_item(icon, item):
     global last_update
     loadDomainsandUpdate(icon)
     last_update = datetime.now()
+    icon.update_menu()
     print(f"Manual Update: {last_update}")
 
 def on_close():
@@ -34,7 +36,7 @@ def on_close():
 def open_settings(icon, item):
     global app
     if app is None:
-        app = Application(on_exit_callback=on_close)
+        app = Application(on_exit_callback=on_close, tl=tl)
         app.mainloop()
     else:
         app.lift() 
@@ -52,6 +54,7 @@ icon = Icon(
     icon=app_icon,
     title="DNS Updater",
     menu=Menu(
+        MenuItem(lambda text: f"Last Update: {last_update.strftime('%m/%d/%Y, %H:%M:%S') if last_update else 'N/A'}", action=None, enabled=False),
         MenuItem("Settings", open_settings, default=True),
         MenuItem("Update now", update_now_item),        
         MenuItem("Exit", exit_app)

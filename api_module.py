@@ -2,6 +2,7 @@ from requests import get, request
 from json import dump, load
 import sys
 from pathlib import Path
+from datetime import datetime
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -64,8 +65,11 @@ def loadData(key, file_path='config.json'):
         with open(resource_path(file_path), 'r') as f:
             data = load(f)
             return data[key]
-    except Exception as e:
-        print(f"Erro ou carregar parametro: {e}")
+    except FileNotFoundError:
+        data = {"ip": "0.0.0.0", "interval": "999", "globalkey": "XXXXXXXXXXXX", "notifications": "false", "domains": []}
+        with open(resource_path(file_path), 'w') as f:
+            dump(data, f, indent=4)
+            return data[key]
 
 def loadDomainsandUpdate(icon):
     try:

@@ -95,7 +95,7 @@ class Domains(ctk.CTkScrollableFrame):
                 for index, domain in enumerate(domains):
                     label_domain = ctk.CTkLabel(self, text=f"Domain {index + 1}: {domain['DOMAIN']}")
                     label_domain.grid(row=index, column=0, padx=10, pady=5, sticky="w")
-                    label_ttl = ctk.CTkLabel(self, text=f"TTL: {domain['TTL_TIME']}")
+                    label_ttl = ctk.CTkLabel(self, text=f"Last Update: {domain['LAST_UPDATE']}")
                     label_ttl.grid(row=index, column=1, padx=10, pady=5, sticky="w")
                     label_proxy = ctk.CTkLabel(self, text=f"Proxy: {domain['PROXY_TYPE']}")
                     label_proxy.grid(row=index, column=2, padx=10, pady=5, sticky="w")
@@ -162,6 +162,7 @@ class AddDomain(ctk.CTk):
         try:
             new_domain = {
                 "ENABLE": True,
+                "LAST_UPDATE": "",
                 "DNS_RECORD_ID": self.entry_dns_record_id.get(),
                 "ZONE_ID": self.entry_zone_id.get(),
                 "COMMENT": self.entry_comment.get(),
@@ -181,9 +182,10 @@ class AddDomain(ctk.CTk):
             print("Submission Error", f"An error occurred: {e}")
 
 class Application(ctk.CTk):
-    def __init__(self, on_exit_callback):
+    def __init__(self, on_exit_callback, tl):
         super().__init__()
         self.on_exit_callback = on_exit_callback
+        self.tl = tl
         self.title("Cloudflare DDNS Settings")
         self.iconbitmap(default=resource_path("icons/icon.ico"))
         self.grid_columnconfigure(0, weight=1)
@@ -276,6 +278,8 @@ class Application(ctk.CTk):
 
         if status_globalkey and status_interval and status_notifications:
             self.open_messagebox("Save", "Save sucessefully.", "Ok", "info")
+            self.tl.stop()
+            #self.tl.start()
         else:
             self.open_messagebox("Save", "Something went wrong when saving. Try again.", "Ok", "warning")
 
